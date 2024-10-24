@@ -70,7 +70,6 @@ class WebScraper:
 
 
     def download_media(self, url):
-        """Use yt-dlp Python library to download the media file, whether audio or video."""
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(self.download_dir, '%(title)s.%(ext)s'),

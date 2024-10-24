@@ -72,19 +72,19 @@ class WebScraper:
     def download_media(self, url):
         """Use yt-dlp Python library to download the media file, whether audio or video."""
         ydl_opts = {
-            'format': 'bestaudio/best',  # Best audio quality
-            'outtmpl': os.path.join(self.download_dir, '%(title)s.%(ext)s'),  # Output filename
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(self.download_dir, '%(title)s.%(ext)s'),
             'postprocessors': [{
-                'key': 'FFmpegExtractAudio',  # Extract only the audio
-                'preferredcodec': 'mp3',  # Convert to mp3
-                'preferredquality': '192',  # Audio quality
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
             }],
-            'quiet': False  # Set to True if you want to suppress the output
+            'quiet': False
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])  # Download the media
+                ydl.download([url])
                 print(f"Downloaded: {url}")
         except yt_dlp.utils.DownloadError as e:
             print(f"Failed to download {url}: {e}")

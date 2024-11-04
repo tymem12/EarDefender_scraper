@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pydantic
+selenium
+yt-dlp
+aiohttp

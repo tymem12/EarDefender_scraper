@@ -53,6 +53,7 @@ async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: 
     async with aiohttp.ClientSession() as session:
         headers = {"Authorization": f"Bearer {bearer_token}"}
         try:
+            logging.info(files_scraped)
             async with session.post(
                 'http://host.docker.internal:9090/scraper/report',
                 json={"analysisId": analysis_id, "newFilePaths": files_scraped},

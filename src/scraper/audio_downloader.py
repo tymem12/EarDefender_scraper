@@ -24,7 +24,8 @@ class AudioDownloader:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                file_path = os.path.join(self.download_dir, f"{info['title']}.mp3")
+                file_path = f"{info['title']}.mp3"
+                print(f"DOWNLOADED FILE: {file_path}")
                 return file_path
         except yt_dlp.utils.DownloadError as e:
             print(f"Failed to download {url}: {e}")

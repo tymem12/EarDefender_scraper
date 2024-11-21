@@ -1,12 +1,11 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel, Field
-from scraper.web_scraper import WebScraper  # Import your WebScraper class
+from scraper.web_scraper import WebScraper
 from typing import Dict, Any, Optional
 import aiohttp
 import logging
 
 
-# Define the input models for validation and parsing
 class InputParams(BaseModel):
     starting_point: str = Field(..., alias='startingPoint')
     max_depth: int = Field(..., alias='maxDepth')
@@ -28,7 +27,6 @@ scraping_results: Dict[str, Dict[str, Any]] = {}
 
 
 async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
-    print('ala mak ota')
     scraper = WebScraper(
         starting_point=params.starting_point,
         max_depth=params.max_depth,
@@ -80,16 +78,3 @@ async def start_scraping(scraping_params: ScrapingParams, background_tasks: Back
     background_tasks.add_task(perform_scraping, scraping_params.analysis_id, scraping_params.input_params, bearer_token)
     
     return {"analysisId": scraping_params.analysis_id, "message": "Scraping started"}
-
-
-@app.get("/scraping/status/{analysis_id}")
-async def check_scraping_status(analysis_id: str):
-    if analysis_id not in scraping_results:
-        raise HTTPException(status_code=404, detail="Analysis ID not found")
-    
-    return scraping_results[analysis_id]
-
-
-@app.get("/")
-async def test():
-    return {"Hello": "World"}

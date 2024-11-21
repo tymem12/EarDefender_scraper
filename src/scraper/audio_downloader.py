@@ -1,5 +1,6 @@
 import yt_dlp
 import os
+import uuid
 
 
 class AudioDownloader:
@@ -8,9 +9,10 @@ class AudioDownloader:
         os.makedirs(download_dir, exist_ok=True)
 
     def download_audio(self, url):
+        unique_id = str(uuid.uuid4())
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(self.download_dir, '%(title)s.%(ext)s'),
+            'outtmpl': os.path.join(self.download_dir, f'{unique_id}.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -24,8 +26,7 @@ class AudioDownloader:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                file_path = f"{info['title']}.mp3"
-                print(f"DOWNLOADED FILE: {file_path}")
+                file_path = f"{unique_id}.mp3"
                 return file_path
         except yt_dlp.utils.DownloadError as e:
             print(f"Failed to download {url}: {e}")

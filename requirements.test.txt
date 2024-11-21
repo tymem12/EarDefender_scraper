@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+selenium
+yt-dlp
+aiohttp
+pytest
+httpx
+pytest-mock
+pytest-asyncio
+pytest-cov

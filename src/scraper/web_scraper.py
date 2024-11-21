@@ -25,7 +25,7 @@ class WebScraper:
         self.max_total_time = max_total_time
         self.download_dir = download_dir
         
-        self.start_time = None
+        self.start_time = time.time()
         self.visit_queue = [(self.starting_point, 0)]
         self.visited = set()
         self.extracted_files = list()

@@ -61,7 +61,8 @@ async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: 
                 if response.status == 200:
                     logging.info("Successfully sent report data")
                 else:
-                    logging.error(f"Error response: {response.status}")
+                    response_body = await response.text()
+                    logging.error(f"Error response: {response.status}, Body: {response_body}")
         except aiohttp.ClientError as exc:
             logging.error(f"Request failed: {exc}")
 

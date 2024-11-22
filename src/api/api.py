@@ -4,6 +4,8 @@ from scraper.web_scraper import WebScraper
 from typing import Dict, Any, Optional
 import aiohttp
 import logging
+import asyncio
+from fastapi.concurrency import run_in_threadpool
 
 
 class InputParams(BaseModel):
@@ -39,7 +41,7 @@ async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: 
     )
     
     try:
-        files_scraped = scraper.scrape()
+        files_scraped = await run_in_threadpool(scraper.scrape)
         scraping_results[analysis_id] = {
             "status": "completed",
         }
@@ -72,7 +74,13 @@ async def start_scraping(scraping_params: ScrapingParams, background_tasks: Back
     if scraping_params.analysis_id in scraping_results:
         raise HTTPException(status_code=400, detail="Analysis ID already in use")
     
-    bearer_token = authorization.split(" ", 1)[1]
+    if authorization is None:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    try:
+        bearer_token = authorization.split(" ", 1)[1]
+    except IndexError:
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
     
     scraping_results[scraping_params.analysis_id] = {"status": "in_progress"}
     

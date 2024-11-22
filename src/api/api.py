@@ -56,7 +56,7 @@ async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: 
                 'http://host.docker.internal:9090/scraper/report',
                 json={"analysisId": analysis_id, "newFilePaths": files_scraped},
                 headers=headers,
-                timeout=10
+                timeout=100
             ) as response:
                 if response.status == 200:
                     logging.info("Successfully sent report data")

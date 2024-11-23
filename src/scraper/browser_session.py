@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import time
+import logging
 
 
 class BrowserSession:
@@ -17,7 +18,10 @@ class BrowserSession:
 
     def visit(self, url):
         self.driver.get(url)
+        logging.info('PRZED 5 S')
         time.sleep(5)
+        logging.info('PO 5 S')
+
 
     def get_elements(self, by, value):
         return self.driver.find_elements(by, value)

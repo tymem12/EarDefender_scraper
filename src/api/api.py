@@ -56,7 +56,7 @@ async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: 
             logging.info(files_scraped)
             async with session.post(
                 'http://host.docker.internal:9090/scraper/report',
-                json={"analysisId": analysis_id, "newFilePaths": files_scraped},
+                json={"analysisId": analysis_id, "files": files_scraped},
                 headers=headers,
                 timeout=100
             ) as response:

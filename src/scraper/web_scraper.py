@@ -78,7 +78,12 @@ class WebScraper:
         path = self.media_downloader.download_audio(url)
 
         if path is not None:
-            self.extracted_files.append(path)
+            self.extracted_files.append(
+                {
+                    'filePath': path,
+                    'link': url
+                }
+            )
             self.file_counter += 1
 
         unvisited_links = [link for link in links if link not in self.visited]

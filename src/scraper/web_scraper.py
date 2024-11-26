@@ -2,6 +2,7 @@ from .browser_session import BrowserSession
 from .link_extractor import LinkExtractor
 from .audio_downloader import AudioDownloader
 import time
+import logging
 
 
 class WebScraper:
@@ -60,10 +61,7 @@ class WebScraper:
     def check_conditions(self, current_depth):
         elapsed_time = time.time() - self.start_time
 
-        print(f'time: {elapsed_time}')
-        print(f'pages: {self.page_counter}')
-        print(f'files: {self.file_counter}')
-        print(f'depth: {current_depth}')
+        logging.log(f'id: {id(self)}; time: {elapsed_time}; pages: {self.page_counter}; files: {self.file_counter}; depth: {current_depth}')
         return (
             self.page_counter >= self.max_pages or
             self.file_counter >= self.max_files or

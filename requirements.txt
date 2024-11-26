@@ -4,3 +4,4 @@ pydantic
 selenium
 yt-dlp
 aiohttp
+requests

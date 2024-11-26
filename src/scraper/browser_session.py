@@ -18,9 +18,7 @@ class BrowserSession:
 
     def visit(self, url):
         self.driver.get(url)
-        logging.info('PRZED 5 S')
         time.sleep(5)
-        logging.info('PO 5 S')
 
 
     def get_elements(self, by, value):

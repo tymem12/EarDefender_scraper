@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 import aiohttp
 import logging
 import asyncio
+import requests
 from fastapi.concurrency import run_in_threadpool
 
 
@@ -28,7 +29,7 @@ app = FastAPI()
 scraping_results: Dict[str, Dict[str, Any]] = {}
 
 
-async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
+def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
     scraper = WebScraper(
         starting_point=params.starting_point,
         max_depth=params.max_depth,
@@ -40,33 +41,26 @@ async def perform_scraping(analysis_id: str, params: InputParams, bearer_token: 
         download_dir='./downloads'
     )
     
-    try:
-        files_scraped = await run_in_threadpool(scraper.scrape)
-        scraping_results[analysis_id] = {
-            "status": "completed",
-        }
-    except Exception as e:
-        scraping_results[analysis_id] = {
-            "status": "failed",
-        }
+    files_scraped = scraper.scrape()
     
-    async with aiohttp.ClientSession() as session:
-        headers = {"Authorization": f"Bearer {bearer_token}"}
-        try:
-            logging.info(files_scraped)
-            async with session.post(
-                'http://host.docker.internal:9090/scraper/report',
-                json={"analysisId": analysis_id, "files": files_scraped},
-                headers=headers,
-                timeout=100
-            ) as response:
-                if response.status == 200:
-                    logging.info("Successfully sent report data")
-                else:
-                    response_body = await response.text()
-                    logging.error(f"Error response: {response.status}, Body: {response_body}")
-        except aiohttp.ClientError as exc:
-            logging.error(f"Request failed: {exc}")
+    headers = {"Authorization": f"Bearer {bearer_token}"}
+    try:
+        body = {"analysisId": analysis_id, "files": files_scraped}
+        logging.info(body)
+
+        response = requests.post(
+            'http://host.docker.internal:9090/scraper/report',
+            json=body,
+            headers=headers,
+            timeout=100
+        )
+        
+        if response.status_code == 200:
+            logging.info("Successfully sent report data")
+        else:
+            logging.error(f"Error response: {response.status_code}, Body: {response.text}")
+    except requests.RequestException as exc:
+        logging.error(f"Request failed: {exc}")
 
 
 @app.post("/scraping/start")

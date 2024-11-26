@@ -18,7 +18,7 @@ class AudioDownloader:
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'quiet': False,
+            'quiet': True,
             'ffmpeg_location': '/usr/bin/ffmpeg',
             'playlist_items': '1'
         }

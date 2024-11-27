@@ -2,12 +2,10 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel, Field
 from scraper.web_scraper import WebScraper
 from typing import Dict, Any, Optional
-import aiohttp
 import logging
-import asyncio
 import requests
-from fastapi.concurrency import run_in_threadpool
-
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 class InputParams(BaseModel):
     starting_point: str = Field(..., alias='startingPoint')
@@ -18,16 +16,16 @@ class InputParams(BaseModel):
     max_time_per_file: int = Field(..., alias='maxTimePerFile')
     max_total_time: int = Field(..., alias='maxTotalTime')
 
-
 class ScrapingParams(BaseModel):
     analysis_id: str = Field(..., alias='analysisId')
     input_params: InputParams = Field(..., alias='inputParams')
-
 
 app = FastAPI()
 
 scraping_results: Dict[str, Dict[str, Any]] = {}
 
+executor = ThreadPoolExecutor(max_workers=2)
+executor_lock = threading.Lock()
 
 def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
     scraper = WebScraper(
@@ -61,10 +59,12 @@ def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
             logging.error(f"Error response: {response.status_code}, Body: {response.text}")
     except requests.RequestException as exc:
         logging.error(f"Request failed: {exc}")
-
+    finally:
+        with executor_lock:
+            scraping_results[analysis_id]["status"] = "completed"
 
 @app.post("/scraping/start")
-async def start_scraping(scraping_params: ScrapingParams, background_tasks: BackgroundTasks, authorization: Optional[str] = Header(None)):
+async def start_scraping(scraping_params: ScrapingParams, authorization: Optional[str] = Header(None)):
     if scraping_params.analysis_id in scraping_results:
         raise HTTPException(status_code=400, detail="Analysis ID already in use")
     
@@ -78,6 +78,6 @@ async def start_scraping(scraping_params: ScrapingParams, background_tasks: Back
     
     scraping_results[scraping_params.analysis_id] = {"status": "in_progress"}
     
-    background_tasks.add_task(perform_scraping, scraping_params.analysis_id, scraping_params.input_params, bearer_token)
+    executor.submit(perform_scraping, scraping_params.analysis_id, scraping_params.input_params, bearer_token)
     
-    return {"analysisId": scraping_params.analysis_id, "message": "Scraping started"}
+    return {"analysisId": scraping_params.analysis_id, "message": "Scraping task submitted"}

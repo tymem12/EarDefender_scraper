@@ -24,7 +24,7 @@ app = FastAPI()
 
 scraping_results: Dict[str, Dict[str, Any]] = {}
 
-executor = ThreadPoolExecutor(max_workers=2)
+executor = ThreadPoolExecutor(max_workers=1)
 executor_lock = threading.Lock()
 
 def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):

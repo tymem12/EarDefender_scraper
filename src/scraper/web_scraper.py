@@ -40,23 +40,26 @@ class WebScraper:
         self.media_downloader = AudioDownloader(self.download_dir)
 
     def scrape(self):
-        self.start_time = time.time()
+        try:
+            self.start_time = time.time()
 
-        while self.visit_queue:
-            current_url, current_depth = self.visit_queue.pop(0)
+            while self.visit_queue:
+                current_url, current_depth = self.visit_queue.pop(0)
 
-            if self.check_conditions(current_depth):
-                break
+                if self.check_conditions(current_depth):
+                    break
 
-            if current_url in self.visited:
-                continue
+                if current_url in self.visited:
+                    continue
 
-            self.visited.add(current_url)
-            self.page_counter += 1
+                self.visited.add(current_url)
+                self.page_counter += 1
 
-            self.process_page(current_url, current_depth)
-
-        self.browser.close()
+                self.process_page(current_url, current_depth)
+        except Exception as e:
+            logging.error(f"Error during scraping: {e}")
+        finally:
+            self.browser.close()
         return self.extracted_files
     
     def check_conditions(self, current_depth):
@@ -71,24 +74,29 @@ class WebScraper:
         )
     
     def process_page(self, url, current_depth):
-        self.browser.visit(url)
+        try:
+            self.browser.visit(url)
 
-        links = self.link_extractor.extract_links(url)
-        path = self.media_downloader.download_audio(url)
+            links = self.link_extractor.extract_links(url)
+            path = self.media_downloader.download_audio(url)
 
-        if path is not None:
-            self.extracted_files.append(
-                {
-                    'filePath': path,
-                    'link': url
-                }
-            )
-            self.file_counter += 1
+            if path is not None:
+                self.extracted_files.append(
+                    {
+                        'filePath': path,
+                        'link': url
+                    }
+                )
+                self.file_counter += 1
 
-        unvisited_links = [link for link in links if link not in self.visited]
-        for link in unvisited_links:
-            self.visit_queue.append((link, current_depth + 1))
-            self.link_counter += 1
+            unvisited_links = [link for link in links if link not in self.visited]
+            for link in unvisited_links:
+                self.visit_queue.append((link, current_depth + 1))
+                self.link_counter += 1
 
-            if self.link_counter >= self.max_pages:
-                break
+                if self.link_counter >= self.max_pages:
+                    break
+
+        except Exception as e:
+            logging.error(f"{id(self)} Error processing page {url}: {e}")
+            self.browser.restart_browser()

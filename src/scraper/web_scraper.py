@@ -3,7 +3,7 @@ from .link_extractor import LinkExtractor
 from .audio_downloader import AudioDownloader
 import logging
 import time
-
+import requests
 
 
 class WebScraper:
@@ -39,7 +39,7 @@ class WebScraper:
         self.link_extractor = LinkExtractor(self.browser)
         self.media_downloader = AudioDownloader(self.download_dir)
 
-    def scrape(self):
+    def scrape(self, headers, analysis_id):
         try:
             self.start_time = time.time()
 
@@ -55,7 +55,7 @@ class WebScraper:
                 self.visited.add(current_url)
                 self.page_counter += 1
 
-                self.process_page(current_url, current_depth)
+                self.process_page(current_url, current_depth, headers, analysis_id)
         except Exception as e:
             logging.error(f"Error during scraping: {e}")
         finally:
@@ -73,21 +73,28 @@ class WebScraper:
             elapsed_time >= self.max_total_time
         )
     
-    def process_page(self, url, current_depth):
+    def process_page(self, url, current_depth, headers, analysis_id):
         try:
             self.browser.visit(url)
 
             links = self.link_extractor.extract_links(url)
-            path = self.media_downloader.download_audio(url)
 
-            if path is not None:
-                self.extracted_files.append(
-                    {
-                        'filePath': path,
-                        'link': url
-                    }
-                )
+            search_result = self.find_existing_analysis(url, headers)
+
+            if search_result is not None:
+                self.update_analysis(headers, analysis_id, search_result)
                 self.file_counter += 1
+            else:
+                path = self.media_downloader.download_audio(url)
+
+                if path is not None:
+                    self.extracted_files.append(
+                        {
+                            'filePath': path,
+                            'link': url
+                        }
+                    )
+                    self.file_counter += 1
 
             unvisited_links = [link for link in links if link not in self.visited]
             for link in unvisited_links:
@@ -100,3 +107,52 @@ class WebScraper:
         except Exception as e:
             logging.error(f"{id(self)} Error processing page {url}: {e}")
             self.browser.restart_browser()
+
+
+    def find_existing_analysis(self, url, headers):
+        try:
+            body = {"links": [url]}
+            logging.info(body)
+
+            response = requests.get(
+                f'http://host.docker.internal:9090/predictions/model/{self.model}',
+                json=body,
+                headers=headers,
+                timeout=100
+            )
+            
+            if response.status_code == 200:
+                logging.info("Received model predictions for given url.")
+
+                response_data = response.json()
+                
+                if isinstance(response_data, list) and len(response_data) > 0:
+                    first_item = response_data[0]
+                    logging.info(f"First item: {first_item}")
+                    return first_item
+                else:
+                    logging.warning("Response body is not a list or is empty.")
+                    return None
+        except requests.RequestException as exc:
+            logging.error(f"Request failed: {exc}")
+            return None
+        
+
+    def update_analysis(self, headers, analysis_id, analysis_result):
+        try:
+            body = {"predictionResults": [analysis_result]}
+            logging.info(body)
+
+            response = requests.put(
+                f'http://host.docker.internal:9090/analyses/{analysis_id}/predictions',
+                json=body,
+                headers=headers,
+                timeout=100
+            )
+            
+            if response.status_code == 200:
+                logging.info("Successfully updated analysis")
+            else:
+                logging.error(f"Error response: {response.status_code}, Body: {response.text}")
+        except requests.RequestException as exc:
+            logging.error(f"Request failed: {exc}")

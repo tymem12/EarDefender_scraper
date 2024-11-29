@@ -34,10 +34,17 @@ class BrowserSession:
     def visit(self, url, retries=3):
         for attempt in range(retries):
             try:
+                start_time = time.time()
                 self.driver.get(url)
+                
                 WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located((By.TAG_NAME, "body"))
                 )
+                
+                WebDriverWait(self.driver, 5).until(
+                    lambda driver: (time.time() - start_time) >= 5
+                )
+                
                 return
             except Exception as e:
                 logging.error(f"Attempt {attempt + 1} failed visiting {url}: {e}")

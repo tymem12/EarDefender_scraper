@@ -38,10 +38,11 @@ def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
         max_total_time=params.max_total_time,
         download_dir='./downloads'
     )
-    
-    files_scraped = scraper.scrape()
-    
+
     headers = {"Authorization": f"Bearer {bearer_token}"}
+
+    files_scraped = scraper.scrape(headers, analysis_id)
+
     try:
         body = {"analysisId": analysis_id, "files": files_scraped}
         logging.info(body)

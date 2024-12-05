@@ -4,6 +4,7 @@ from .audio_downloader import AudioDownloader
 import logging
 import time
 import requests
+import os
 
 
 class WebScraper:
@@ -113,9 +114,11 @@ class WebScraper:
         try:
             body = {"links": [url]}
             logging.info(body)
+            connector_address = os.getenv('CONNECTOR_ADDRESS')
+            connector_port = os.getenv('CONNECTOR_PORT')
 
             response = requests.get(
-                f'http://host.docker.internal:9090/predictions/model/{self.model}',
+                f'http://{connector_address}:{connector_port}/predictions/model/{self.model}',
                 json=body,
                 headers=headers,
                 timeout=100
@@ -142,9 +145,11 @@ class WebScraper:
         try:
             body = {"predictionResults": [analysis_result]}
             logging.info(body)
+            connector_address = os.getenv('CONNECTOR_ADDRESS')
+            connector_port = os.getenv('CONNECTOR_PORT')
 
             response = requests.put(
-                f'http://host.docker.internal:9090/analyses/{analysis_id}/predictions',
+                f'http://{connector_address}:{connector_port}/analyses/{analysis_id}/predictions',
                 json=body,
                 headers=headers,
                 timeout=100

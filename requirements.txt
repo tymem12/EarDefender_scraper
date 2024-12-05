@@ -5,3 +5,4 @@ selenium
 yt-dlp
 aiohttp
 requests
+python-dotenv

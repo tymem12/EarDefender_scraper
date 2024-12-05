@@ -6,6 +6,7 @@ import logging
 import requests
 from concurrent.futures import ThreadPoolExecutor
 import threading
+import os
 
 class InputParams(BaseModel):
     starting_point: str = Field(..., alias='startingPoint')
@@ -46,9 +47,11 @@ def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
     try:
         body = {"analysisId": analysis_id, "files": files_scraped}
         logging.info(body)
+        connector_address = os.getenv('CONNECTOR_ADDRESS')
+        connector_port = os.getenv('CONNECTOR_PORT')
 
         response = requests.post(
-            'http://host.docker.internal:9090/scraper/report',
+            f'http://{connector_address}:{connector_port}/scraper/report',
             json=body,
             headers=headers,
             timeout=100

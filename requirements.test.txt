@@ -9,3 +9,4 @@ httpx
 pytest-mock
 pytest-asyncio
 pytest-cov
+requests

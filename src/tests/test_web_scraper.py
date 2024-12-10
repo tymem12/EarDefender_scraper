@@ -1,6 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock
 import time
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from scraper.web_scraper import WebScraper
 
 
@@ -11,6 +13,7 @@ def mock_browser_session():
         mock_browser = MockBrowserSession.return_value
         yield mock_browser
 
+
 @pytest.fixture
 def mock_link_extractor():
     """Fixture to create a mock LinkExtractor."""
@@ -18,12 +21,14 @@ def mock_link_extractor():
         mock_extractor = MockLinkExtractor.return_value
         yield mock_extractor
 
+
 @pytest.fixture
 def mock_audio_downloader():
     """Fixture to create a mock AudioDownloader."""
     with patch("scraper.web_scraper.AudioDownloader") as MockAudioDownloader:
         mock_downloader = MockAudioDownloader.return_value
         yield mock_downloader
+
 
 @pytest.fixture
 def web_scraper(mock_browser_session, mock_link_extractor, mock_audio_downloader):
@@ -36,7 +41,7 @@ def web_scraper(mock_browser_session, mock_link_extractor, mock_audio_downloader
         model="sample_model",
         max_time_per_file=5,
         max_total_time=10,
-        download_dir="./downloads"
+        download_dir="./downloads",
     )
 
 
@@ -56,19 +61,28 @@ def test_initialization(web_scraper):
 
 
 @patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 6])
-def test_scrape_process(mock_time, web_scraper, mock_browser_session, mock_link_extractor, mock_audio_downloader):
+def test_scrape_process(
+    mock_time,
+    web_scraper,
+    mock_browser_session,
+    mock_link_extractor,
+    mock_audio_downloader,
+):
     """Test the scraping process."""
     mock_browser_session.visit.return_value = None
     mock_browser_session.close.return_value = None
     mock_link_extractor.extract_links.side_effect = [
         {"https://example.com/page1", "https://example.com/page2"},
-        set()
+        set(),
     ]
     mock_audio_downloader.download_audio.side_effect = ["file1.mp3", None]
 
-    extracted_files = web_scraper.scrape()
-    assert extracted_files == ["file1.mp3"]
-    
+    headers = {"User-Agent": "test-agent"}
+    analysis_id = "test-analysis"
+
+    extracted_files = web_scraper.scrape(headers=headers, analysis_id=analysis_id)
+    assert extracted_files == [{"filePath": "file1.mp3", "link": "https://example.com"}]
+
     assert mock_browser_session.visit.call_count == 2
     assert mock_link_extractor.extract_links.call_count == 2
     assert mock_audio_downloader.download_audio.call_count == 2
@@ -93,18 +107,35 @@ def test_check_conditions(web_scraper):
     assert web_scraper.check_conditions(current_depth=1)
 
 
-def test_process_page(web_scraper, mock_browser_session, mock_link_extractor, mock_audio_downloader):
+def test_process_page(
+    web_scraper, mock_browser_session, mock_link_extractor, mock_audio_downloader
+):
     """Test that process_page visits a URL, extracts links, and downloads audio."""
     mock_browser_session.visit.return_value = None
-    mock_link_extractor.extract_links.return_value = set(["https://example.com/page1", "https://example.com/page2"])
+    mock_link_extractor.extract_links.return_value = set(
+        ["https://example.com/page1", "https://example.com/page2"]
+    )
     mock_audio_downloader.download_audio.return_value = "file1.mp3"
     web_scraper.max_pages = 3
 
-    web_scraper.process_page("https://example.com", current_depth=0)
+    headers = {"User-Agent": "test-agent"}
+    analysis_id = "test-analysis"
+
+    web_scraper.process_page(
+        "https://example.com", current_depth=0, headers=headers, analysis_id=analysis_id
+    )
     assert web_scraper.file_counter == 1
-    assert web_scraper.extracted_files == ["file1.mp3"]
-    assert web_scraper.visit_queue == [("https://example.com", 0), ("https://example.com/page1", 1), ("https://example.com/page2", 1)]
-    
+    assert web_scraper.extracted_files == [
+        {"filePath": "file1.mp3", "link": "https://example.com"}
+    ]
+    assert set(web_scraper.visit_queue) == set(
+        [
+            ("https://example.com", 0),
+            ("https://example.com/page1", 1),
+            ("https://example.com/page2", 1),
+        ]
+    )
+
     mock_browser_session.visit.assert_called_once_with("https://example.com")
     mock_link_extractor.extract_links.assert_called_once_with("https://example.com")
     mock_audio_downloader.download_audio.assert_called_once_with("https://example.com")

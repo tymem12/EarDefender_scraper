@@ -5,6 +5,7 @@ import logging
 import time
 import requests
 import os
+import signal
 
 
 class WebScraper:
@@ -38,7 +39,7 @@ class WebScraper:
 
         self.browser = BrowserSession()
         self.link_extractor = LinkExtractor(self.browser)
-        self.media_downloader = AudioDownloader(self.download_dir)
+        self.media_downloader = AudioDownloader(self.download_dir, max_time_per_file)
 
     def scrape(self, headers, analysis_id):
         try:
@@ -57,8 +58,11 @@ class WebScraper:
                 self.page_counter += 1
 
                 self.process_page(current_url, current_depth, headers, analysis_id)
+
+                if not self.visit_queue:
+                    logging.info('Visit queue is empty.')
         except Exception as e:
-            logging.error(f"Error during scraping: {e}")
+            logging.error(f'Error during scraping: {e}')
         finally:
             self.browser.close()
         return self.extracted_files
@@ -106,7 +110,7 @@ class WebScraper:
                     break
 
         except Exception as e:
-            logging.error(f"{id(self)} Error processing page {url}: {e}")
+            logging.error(f'{id(self)} Error processing page {url}: {e}')
             self.browser.restart_browser()
 
 
@@ -125,26 +129,26 @@ class WebScraper:
             )
             
             if response.status_code == 200:
-                logging.info("Received model predictions for given url.")
+                logging.info('Received model predictions for given url.')
 
                 response_data = response.json()
                 
                 if isinstance(response_data, list) and len(response_data) > 0:
                     first_item = response_data[0]
-                    logging.info(f"First item: {first_item}")
+                    logging.info(f"First item link: {first_item['link']}")
                     return first_item
                 else:
-                    logging.warning("Response body is not a list or is empty.")
+                    logging.info('Response body is not a list or is empty.')
                     return None
         except requests.RequestException as exc:
-            logging.error(f"Request failed: {exc}")
+            logging.error(f'Request failed: {exc}')
             return None
         
 
     def update_analysis(self, headers, analysis_id, analysis_result):
         try:
             body = {"predictionResults": [analysis_result]}
-            logging.info(body)
+            logging.info(f'Updating analysis {analysis_id}, link: {body["link"]}')
             connector_address = os.getenv('CONNECTOR_ADDRESS')
             connector_port = os.getenv('CONNECTOR_PORT')
 

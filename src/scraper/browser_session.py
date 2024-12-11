@@ -48,9 +48,7 @@ class BrowserSession:
                 return
             except Exception as e:
                 logging.error(
-                    f"Attempt {
-                        attempt +
-                        1} failed visiting {url}: {e}"
+                    f"Attempt {attempt + 1} failed visiting {url}: {e}"
                 )
                 if attempt < retries - 1:
                     continue

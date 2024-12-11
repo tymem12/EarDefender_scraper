@@ -67,9 +67,7 @@ def perform_scraping(analysis_id: str, params: InputParams, bearer_token: str):
             logging.info("Successfully sent report data")
         else:
             logging.error(
-                f"Error response: {
-                    response.status_code}, Body: {
-                    response.text}"
+                f"Error response: {response.status_code}, Body: {response.text}"
             )
     except requests.RequestException as exc:
         logging.error(f"Request failed: {exc}")

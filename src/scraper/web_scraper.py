@@ -72,10 +72,10 @@ class WebScraper:
         elapsed_time = time.time() - self.start_time
 
         logging.info(
-            f"id: {
+            f"""id: {
                 id(self)}; time: {elapsed_time}; pages: {
                 self.page_counter}; files: {
-                self.file_counter}; depth: {current_depth}"
+                self.file_counter}; depth: {current_depth}"""
         )
         return (
             self.page_counter >= self.max_pages
@@ -148,8 +148,7 @@ class WebScraper:
         try:
             body = {"predictionResults": [analysis_result]}
             logging.info(
-                f'Updating analysis {analysis_id}, link: {
-                    body["link"]}'
+                f'Updating analysis {analysis_id}, link: {analysis_result["link"]}'
             )
             connector_address = os.getenv("CONNECTOR_ADDRESS")
             connector_port = os.getenv("CONNECTOR_PORT")
@@ -165,9 +164,7 @@ class WebScraper:
                 logging.info("Successfully updated analysis")
             else:
                 logging.error(
-                    f"Error response: {
-                        response.status_code}, Body: {
-                        response.text}"
+                    f"Error response: {response.status_code}, Body: {response.text}"
                 )
         except requests.RequestException as exc:
             logging.error(f"Request failed: {exc}")

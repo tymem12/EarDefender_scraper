@@ -1,8 +1,12 @@
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
-from urllib.parse import urljoin
 import logging
 import time
+from urllib.parse import urljoin
+
+from selenium.common.exceptions import (
+    StaleElementReferenceException,
+    WebDriverException,
+)
+from selenium.webdriver.common.by import By
 
 
 class LinkExtractor:
@@ -11,7 +15,7 @@ class LinkExtractor:
 
     def extract_links(self, base_url):
         try:
-            anchors = self.browser.get_elements(By.TAG_NAME, 'a')
+            anchors = self.browser.get_elements(By.TAG_NAME, "a")
         except WebDriverException as e:
             logging.error(f"Error retrieving anchor elements: {e}")
             return set()
@@ -20,7 +24,7 @@ class LinkExtractor:
 
         for anchor in anchors:
             try:
-                href = anchor.get_attribute('href')
+                href = anchor.get_attribute("href")
                 if href:
                     full_url = urljoin(base_url, href)
                     links.add(full_url)
